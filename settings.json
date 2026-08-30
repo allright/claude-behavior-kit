@@ -1,0 +1,56 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod:*)",
+      "Bash(python3:*)",
+      "Bash(go mod download:*)",
+      "Bash(GOPROXY=direct go mod download:*)",
+      "Bash(unset:*)",
+      "Bash(go mod vendor:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(go build:*)",
+      "Bash(go mod tidy:*)",
+      "Bash(curl:*)"
+    ],
+    "defaultMode": "auto"
+  },
+  "model": "opus[1m]",
+  "effortLevel": "high",
+  "theme": "dark-daltonized",
+  "tui": "fullscreen",
+  "verbose": true,
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "input=$(cat); fp=$(printf '%s' \"$input\" | jq -r '.tool_input.file_path // empty'); case \"$fp\" in \"$HOME/.claude/\"*) git -C \"$HOME/.claude\" add -A 2>/dev/null; git -C \"$HOME/.claude\" diff --cached --quiet 2>/dev/null || git -C \"$HOME/.claude\" commit -q -m \"auto: config change ($(basename \"$fp\"))\" 2>/dev/null ;; esac; exit 0"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "input=$(cat); model=$(echo \"$input\" | jq -r '.model.display_name'); current_dir=$(echo \"$input\" | jq -r '.workspace.current_dir'); dir_basename=$(basename \"$current_dir\"); remaining=$(echo \"$input\" | jq -r '.context_window.remaining_percentage // empty'); git_branch=\"\"; if git -C \"$current_dir\" rev-parse --git-dir > /dev/null 2>&1; then git_branch=$(git -C \"$current_dir\" --no-optional-locks branch --show-current 2>/dev/null); [ -n \"$git_branch\" ] && git_branch=\"($git_branch)\"; fi; components=(); [ -n \"$git_branch\" ] && components+=(\"$git_branch\"); [ -n \"$model\" ] && components+=(\"$model\"); [ -n \"$dir_basename\" ] && components+=(\"$dir_basename\"); [ -n \"$remaining\" ] && components+=(\"ctx: $(printf '%.0f%%' \"$remaining\")\"); IFS=\" | \"; echo \"${components[*]}\""
+  },
+  "enabledPlugins": {
+    "swift-lsp@claude-plugins-official": true,
+    "clangd-lsp@claude-plugins-official": true,
+    "code-simplifier@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {
+    "claude-code-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-code"
+      }
+    }
+  }
+}
